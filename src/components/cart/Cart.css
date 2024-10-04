@@ -1,0 +1,21 @@
+/* src/components/styles/Cart.css */
+
+.cart {
+  /* Add styles for the cart */
+}
+
+.cart-items {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr); /* Three items per row */
+  gap: 10px; /* Gap between items */
+}
+
+.cart-items ul {
+  list-style-type: none;
+  padding: 0;
+}
+
+.cart-items li {
+  border: 1px solid #ddd; /* Optional border for each cart item */
+  padding: 10px;
+}
