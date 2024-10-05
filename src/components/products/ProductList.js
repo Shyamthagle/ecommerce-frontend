@@ -16,43 +16,27 @@ const ProductList = ({ addToOrder, products }) => {
     const selectedQuantity = quantities[product.id];
 
     if (selectedQuantity > 0) {
-      const updatedProduct = {
-        ...product,
-        quantity: selectedQuantity,
-      };
-      addToOrder(updatedProduct);
-
-      setQuantities((prevQuantities) => ({
-        ...prevQuantities,
-        [product.id]: 0,
-      }));
+      addToOrder({ ...product, quantity: selectedQuantity });
+      setQuantities((prev) => ({ ...prev, [product.id]: 0 })); // Reset quantity
     } else {
       alert("Please select a quantity greater than 0");
     }
   };
 
-  const incrementQuantity = (productId) => {
+  const updateQuantity = (productId, increment) => {
     setQuantities((prevQuantities) => {
       const currentQuantity = prevQuantities[productId];
       const stockAvailable = products.find((p) => p.id === productId).stock;
 
-      if (currentQuantity < stockAvailable) {
-        return {
-          ...prevQuantities,
-          [productId]: currentQuantity + 1,
-        };
+      if (increment && currentQuantity < stockAvailable) {
+        return { ...prevQuantities, [productId]: currentQuantity + 1 };
+      } else if (!increment && currentQuantity > 0) {
+        return { ...prevQuantities, [productId]: currentQuantity - 1 };
       } else {
-        alert("Stock limit reached!");
+        alert(increment ? "Stock limit reached!" : "Cannot reduce quantity below 0!");
         return prevQuantities;
       }
     });
-  };
-
-  const decrementQuantity = (productId) => {
-    setQuantities((prevQuantities) => ({
-      ...prevQuantities,
-      [productId]: Math.max(0, prevQuantities[productId] - 1),
-    }));
   };
 
   return (
@@ -68,27 +52,12 @@ const ProductList = ({ addToOrder, products }) => {
             <p>Stock: {product.stock}</p>
 
             <div className="quantity-control">
-              <button
-                onClick={() => decrementQuantity(product.id)}
-                disabled={quantities[product.id] === 0}
-              >
-                -
-              </button>
+              <button onClick={() => updateQuantity(product.id, false)} disabled={quantities[product.id] === 0}>-</button>
               <span>{quantities[product.id]}</span>
-              <button
-                onClick={() => incrementQuantity(product.id)}
-                disabled={quantities[product.id] >= product.stock}
-              >
-                +
-              </button>
+              <button onClick={() => updateQuantity(product.id, true)} disabled={quantities[product.id] >= product.stock}>+</button>
             </div>
 
-            <button
-              onClick={() => handleAddToOrder(product)}
-              disabled={quantities[product.id] === 0}
-            >
-              Add to Cart
-            </button>
+            <button onClick={() => handleAddToOrder(product)} disabled={quantities[product.id] === 0}>Add to Cart</button>
           </div>
         ))}
       </div>

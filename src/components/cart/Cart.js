@@ -13,7 +13,6 @@ const Cart = ({ cartItems, removeFromCart, placeOrder }) => {
     }
 
     placeOrder();
-
     alert("Order placed successfully!");
   };
 

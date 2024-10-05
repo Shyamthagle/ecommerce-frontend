@@ -6,7 +6,6 @@ import Cart from "./components/cart/Cart";
 const App = () => {
   const [cartItems, setCartItems] = useState([]);
   const [products, setProducts] = useState([]);
-  const [loading, setLoading] = useState(false);
 
   // Fetch products from the API
   const fetchProducts = async () => {
@@ -25,29 +24,23 @@ const App = () => {
 
   // Add product to cart
   const addToCart = (product) => {
-    const existingProduct = cartItems.find((item) => item.id === product.id);
+    setCartItems((prevItems) => {
+      const existingItem = prevItems.find((item) => item.id === product.id);
 
-    if (existingProduct) {
-      setCartItems((prevItems) =>
-        prevItems.map((item) =>
+      if (existingItem) {
+        return prevItems.map((item) =>
           item.id === product.id
             ? { ...item, quantity: item.quantity + product.quantity }
             : item
-        )
-      );
-    } else {
-      setCartItems((prevItems) => [
-        ...prevItems,
-        { ...product, quantity: product.quantity },
-      ]);
-    }
+        );
+      }
+      return [...prevItems, { ...product, quantity: product.quantity }];
+    });
   };
 
   // Remove product from cart
   const removeFromCart = (productId) => {
-    setCartItems((prevItems) =>
-      prevItems.filter((item) => item.id !== productId)
-    );
+    setCartItems((prevItems) => prevItems.filter((item) => item.id !== productId));
   };
 
   // Place order and update product stock
@@ -64,41 +57,26 @@ const App = () => {
     }));
 
     try {
-      setLoading(true);
-
       // Place order
       const orderResponse = await axios.post("http://localhost:3002/orders", {
-        orderItems: {
-          products: productsToUpdate,
-          totalAmount: totalAmount,
-        },
+        orderItems: { products: productsToUpdate, totalAmount },
       });
 
       if (orderResponse?.data) {
         // Update product stock
         await Promise.all(
-          productsToUpdate.map(async (product) => {
-            try {
-              await axios.patch(
-                `http://localhost:3001/products/${product.productId}`,
-                {
-                  quantity: product.quantity,
-                }
-              );
-
-              setProducts((prevProducts) =>
-                prevProducts.map((p) =>
-                  p.id === product.productId
-                    ? { ...p, stock: p.stock - product.quantity } 
-                    : p
-                )
-              );
-            } catch (error) {
+          productsToUpdate.map((product) =>
+            axios.patch(`http://localhost:3001/products/${product.productId}`, {
+              quantity: product.quantity,
+            }).catch((error) => {
               console.error("Error updating product stock:", error);
               alert("Error updating product stock.");
-            }
-          })
+            })
+          )
         );
+
+        // Refetch products to ensure data is up to date
+        await fetchProducts();
 
         // Clear the cart after successful order
         setCartItems([]);
@@ -108,8 +86,6 @@ const App = () => {
     } catch (error) {
       console.error("Error placing order:", error);
       alert("Error placing the order.");
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -120,7 +96,6 @@ const App = () => {
         cartItems={cartItems}
         removeFromCart={removeFromCart}
         placeOrder={placeOrder}
-        loading={loading}
       />
     </div>
   );
